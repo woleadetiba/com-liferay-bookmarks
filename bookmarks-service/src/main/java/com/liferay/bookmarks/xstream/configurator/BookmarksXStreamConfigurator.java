@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.bookmarks.exportimport.xstream.configurator;
+package com.liferay.bookmarks.xstream.configurator;
 
 import com.liferay.bookmarks.model.impl.BookmarksEntryImpl;
 import com.liferay.bookmarks.model.impl.BookmarksFolderImpl;
