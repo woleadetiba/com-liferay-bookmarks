@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.bookmarks.web.internal.portlet.path;
+package com.liferay.bookmarks.web.internal.auth.publicpath;
 
 import org.osgi.service.component.annotations.Component;
 
