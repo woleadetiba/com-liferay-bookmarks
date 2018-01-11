@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.bookmarks.internal.permission;
+package com.liferay.bookmarks.internal.security.permission.resource;
 
 import com.liferay.bookmarks.constants.BookmarksConstants;
 import com.liferay.bookmarks.constants.BookmarksPortletKeys;
@@ -35,7 +35,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Preston Crary
  */
 @Component(immediate = true)
-public class BookmarksPortletPermissionRegistrar {
+public class BookmarksPortletResourcePermissionRegistrar {
 
 	@Activate
 	public void activate(BundleContext bundleContext) {

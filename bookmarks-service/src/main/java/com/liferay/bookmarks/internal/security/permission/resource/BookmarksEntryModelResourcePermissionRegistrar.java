@@ -12,17 +12,18 @@
  * details.
  */
 
-package com.liferay.bookmarks.internal.permission;
+package com.liferay.bookmarks.internal.security.permission.resource;
 
 import com.liferay.bookmarks.constants.BookmarksConstants;
 import com.liferay.bookmarks.constants.BookmarksPortletKeys;
+import com.liferay.bookmarks.model.BookmarksEntry;
 import com.liferay.bookmarks.model.BookmarksFolder;
 import com.liferay.bookmarks.model.BookmarksFolderConstants;
+import com.liferay.bookmarks.service.BookmarksEntryLocalService;
 import com.liferay.bookmarks.service.BookmarksFolderLocalService;
 import com.liferay.exportimport.kernel.staging.permission.StagingPermission;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.DynamicInheritancePermissionLogic;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionFactory;
@@ -44,39 +45,32 @@ import org.osgi.service.component.annotations.Reference;
  * @author Preston Crary
  */
 @Component(immediate = true)
-public class BookmarksFolderPermissionRegistrar {
+public class BookmarksEntryModelResourcePermissionRegistrar {
 
 	@Activate
 	public void activate(BundleContext bundleContext) {
 		Dictionary<String, Object> properties = new HashMapDictionary<>();
 
-		properties.put("model.class.name", BookmarksFolder.class.getName());
+		properties.put("model.class.name", BookmarksEntry.class.getName());
 
 		_serviceRegistration = bundleContext.registerService(
 			ModelResourcePermission.class,
 			ModelResourcePermissionFactory.create(
-				BookmarksFolder.class, BookmarksFolder::getFolderId,
-				_bookmarksFolderLocalService::getFolder,
+				BookmarksEntry.class, BookmarksEntry::getEntryId,
+				_bookmarksEntryLocalService::getEntry,
 				_portletResourcePermission,
 				(modelResourcePermission, consumer) -> {
 					consumer.accept(
 						new StagedModelPermissionLogic<>(
 							_stagingPermission, BookmarksPortletKeys.BOOKMARKS,
-							BookmarksFolder::getFolderId));
+							BookmarksEntry::getEntryId));
 
 					if (PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
 						consumer.accept(
 							new DynamicInheritancePermissionLogic<>(
-								modelResourcePermission,
+								_bookmarksFolderModelResourcePermission,
 								_getFetchParentFunction(), true));
 					}
-				},
-				actionId -> {
-					if (ActionKeys.ADD_FOLDER.equals(actionId)) {
-						return ActionKeys.ADD_SUBFOLDER;
-					}
-
-					return actionId;
 				}),
 			properties);
 	}
@@ -86,17 +80,17 @@ public class BookmarksFolderPermissionRegistrar {
 		_serviceRegistration.unregister();
 	}
 
-	private UnsafeFunction<BookmarksFolder, BookmarksFolder, PortalException>
+	private UnsafeFunction<BookmarksEntry, BookmarksFolder, PortalException>
 		_getFetchParentFunction() {
 
-		return folder -> {
-			long folderId = folder.getParentFolderId();
+		return entry -> {
+			long folderId = entry.getFolderId();
 
 			if (BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID == folderId) {
 				return null;
 			}
 
-			if (folder.isInTrash()) {
+			if (entry.isInTrash()) {
 				return _bookmarksFolderLocalService.fetchBookmarksFolder(
 					folderId);
 			}
@@ -106,7 +100,16 @@ public class BookmarksFolderPermissionRegistrar {
 	}
 
 	@Reference
+	private BookmarksEntryLocalService _bookmarksEntryLocalService;
+
+	@Reference
 	private BookmarksFolderLocalService _bookmarksFolderLocalService;
+
+	@Reference(
+		target = "(model.class.name=com.liferay.bookmarks.model.BookmarksFolder)"
+	)
+	private ModelResourcePermission<BookmarksFolder>
+		_bookmarksFolderModelResourcePermission;
 
 	@Reference(
 		target = "(resource.name=" + BookmarksConstants.RESOURCE_NAME + ")"
